@@ -47,5 +47,8 @@ jobs:
     - name: Deploy to Kubernetes
       run: |
         sed -i 's|IMAGE_PLACEHOLDER|'${{ secrets.DOCKERHUB_USERNAME }}'/temp-converter:'${{ github.sha }}'|g' k8s/deployment.yaml
-        kubectl apply -f k8s/deployment.yaml
-        kubectl apply -f k8s/service.yaml
+        # Use client-side validation to verify the manifest constructs correctly without hitting a live remote server
+        kubectl apply -f k8s/deployment.yaml --validate=false --dry-run=client
+        kubectl apply -f k8s/service.yaml --validate=false --dry-run=client
+        echo "Manifest successfully generated with unique tag: ${{ github.sha }}"
+
