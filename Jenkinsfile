@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG        = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+        // Uses native Git execution block compatible with Windows shell runners
+        IMAGE_TAG        = bat(script: "git rev-parse --short HEAD", returnStdout: true).trim().split('\r\n')[-1]
         DOCKER_IMAGE     = "siddharthvr7/temp-converter:${IMAGE_TAG}"
         DOCKER_REGISTRY  = "siddharthvr7/temp-converter"
     }
 
     stages {
-
         stage('Continuous Integration: Test') {
             steps {
                 echo 'Checking dependencies and running automated unit tests...'
