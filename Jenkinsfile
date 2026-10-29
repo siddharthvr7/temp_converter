@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        // Simple static variables are allowed here
         DOCKER_REGISTRY = "siddharthvr7/temp-converter"
+        // Injects standard Windows installations directories directly into the run path
+        PATH = "C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\Program Files\\Docker\\Docker\\resources;${env.PATH}"
     }
 
     stages {
@@ -11,13 +12,10 @@ pipeline {
             steps {
                 script {
                     echo 'Generating unique tag fingerprints using Git...'
-                    // Execute the git command inside a script step, which is fully supported
                     String rawTag = bat(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    // Extract only the final line to cleanly parse the SHA hash on Windows
                     String[] lines = rawTag.split('\n')
                     env.IMAGE_TAG = lines[lines.length - 1].trim()
                     
-                    // Construct the full image name string dynamically
                     env.DOCKER_IMAGE = "siddharthvr7/temp-converter:${env.IMAGE_TAG}"
                     echo "Target build tag registered: ${env.DOCKER_IMAGE}"
                 }
@@ -52,6 +50,7 @@ pipeline {
                 echo 'Injecting unique tag and deploying to local Kubernetes cluster...'
                 bat "powershell -Command \"(Get-Content k8s/deployment.yaml) -replace 'IMAGE_PLACEHOLDER', '${env.DOCKER_IMAGE}' | Set-Content k8s/deployment.yaml\""
                 
+                // Runs local deployment commands directly into your cluster architecture
                 bat 'kubectl apply -f k8s/deployment.yaml'
                 bat 'kubectl apply -f k8s/service.yaml'
                 
